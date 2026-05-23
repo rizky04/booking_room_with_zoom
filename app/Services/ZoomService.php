@@ -31,8 +31,10 @@ class ZoomService
             return null;
         }
 
+        $accountIndex = $this->selectAccount($booking);
+
         try {
-            $token    = $this->getAccessToken();
+            $token    = $this->getAccessToken($accountIndex);
             $duration = $booking->duration_minutes;
 
             $response = Http::withToken($token)
@@ -57,42 +59,45 @@ class ZoomService
                 $data = $response->json();
 
                 return ZoomMeeting::create([
-                    'booking_id'     => $booking->id,
+                    'booking_id'      => $booking->id,
+                    'account_index'   => $accountIndex,
                     'zoom_meeting_id' => (string) $data['id'],
-                    'zoom_uuid'      => $data['uuid'] ?? null,
-                    'host_id'        => $data['host_id'] ?? null,
-                    'topic'          => $data['topic'],
-                    'join_url'       => $data['join_url'],
-                    'start_url'      => $data['start_url'] ?? null,
-                    'password'       => $data['password'] ?? null,
-                    'host_email'     => $data['host_email'] ?? null,
-                    'duration'       => $data['duration'],
-                    'start_time'     => $data['start_time'],
+                    'zoom_uuid'       => $data['uuid'] ?? null,
+                    'host_id'         => $data['host_id'] ?? null,
+                    'topic'           => $data['topic'],
+                    'join_url'        => $data['join_url'],
+                    'start_url'       => $data['start_url'] ?? null,
+                    'password'        => $data['password'] ?? null,
+                    'host_email'      => $data['host_email'] ?? null,
+                    'duration'        => $data['duration'],
+                    'start_time'      => $data['start_time'],
                 ]);
             }
 
             Log::error('Zoom meeting creation failed', [
-                'booking_id' => $booking->id,
-                'response'   => $response->json(),
+                'booking_id'    => $booking->id,
+                'account_index' => $accountIndex,
+                'response'      => $response->json(),
             ]);
         } catch (\Exception $e) {
             Log::error('Zoom meeting creation exception', [
-                'booking_id' => $booking->id,
-                'error'      => $e->getMessage(),
+                'booking_id'    => $booking->id,
+                'account_index' => $accountIndex,
+                'error'         => $e->getMessage(),
             ]);
         }
 
         return null;
     }
 
-    public function deleteMeeting(string $meetingId): bool
+    public function deleteMeeting(string $meetingId, int $accountIndex = 1): bool
     {
         if (!$this->isConfigured()) {
             return false;
         }
 
         try {
-            $token    = $this->getAccessToken();
+            $token    = $this->getAccessToken($accountIndex);
             $response = Http::withToken($token)->delete("{$this->baseUrl}/meetings/{$meetingId}");
             return $response->successful() || $response->status() === 404;
         } catch (\Exception $e) {
@@ -101,22 +106,53 @@ class ZoomService
         }
     }
 
-    private function getAccessToken(): string
+    /**
+     * Pilih akun yang tidak sedang dipakai pada slot waktu booking tersebut.
+     * Prioritas akun 1; jika akun 1 sudah ada meeting yang bentrok, pakai akun 2.
+     */
+    private function selectAccount(Booking $booking): int
     {
-        return Cache::remember('zoom_access_token', config('zoom.cache_ttl', 3500), function () {
-            $clientId     = config('zoom.client_id');
-            $clientSecret = config('zoom.client_secret');
-            $accountId    = config('zoom.account_id');
+        $account1Busy = ZoomMeeting::whereHas('booking', function ($q) use ($booking) {
+            $q->where('date', $booking->date->toDateString())
+              ->where('id', '!=', $booking->id)
+              ->whereIn('status', ['pending', 'confirmed'])
+              ->where('start_time', '<', $booking->end_time)
+              ->where('end_time', '>', $booking->start_time);
+        })->where('account_index', 1)->exists();
 
-            $response = Http::withBasicAuth($clientId, $clientSecret)
+        if (!$account1Busy) {
+            return 1;
+        }
+
+        // Cek apakah akun 2 dikonfigurasi
+        $account2Configured = !empty(config('zoom.accounts.2.client_id'))
+            && !empty(config('zoom.accounts.2.client_secret'))
+            && !empty(config('zoom.accounts.2.account_id'));
+
+        if ($account2Configured) {
+            return 2;
+        }
+
+        // Fallback ke akun 1 jika akun 2 tidak dikonfigurasi
+        return 1;
+    }
+
+    private function getAccessToken(int $accountIndex = 1): string
+    {
+        $cacheKey = "zoom_access_token_{$accountIndex}";
+
+        return Cache::remember($cacheKey, config('zoom.cache_ttl', 3500), function () use ($accountIndex) {
+            $account = config("zoom.accounts.{$accountIndex}");
+
+            $response = Http::withBasicAuth($account['client_id'], $account['client_secret'])
                 ->asForm()
                 ->post(config('zoom.token_url'), [
                     'grant_type' => 'account_credentials',
-                    'account_id' => $accountId,
+                    'account_id' => $account['account_id'],
                 ]);
 
             if (!$response->successful()) {
-                throw new \Exception('Failed to get Zoom access token: ' . $response->body());
+                throw new \Exception("Failed to get Zoom access token for account {$accountIndex}: " . $response->body());
             }
 
             return $response->json('access_token');

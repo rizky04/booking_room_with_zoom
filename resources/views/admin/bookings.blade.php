@@ -51,6 +51,12 @@
             Daftar Booking
             <span class="text-gray-400 font-normal text-sm">({{ $bookings->total() }} total)</span>
         </h2>
+        <a href="{{ route('admin.bookings.create') }}" class="btn-primary text-sm py-2 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Buat Booking
+        </a>
     </div>
 
     <div class="overflow-x-auto">

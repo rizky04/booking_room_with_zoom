@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Room;
+use App\Services\AvailabilityService;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class AdminController extends Controller
 {
-    public function __construct(private BookingService $bookingService) {}
+    public function __construct(
+        private BookingService $bookingService,
+        private AvailabilityService $availabilityService,
+    ) {}
 
     public function dashboard()
     {
@@ -77,6 +80,61 @@ class AdminController extends Controller
         return view('admin.bookings-detail', compact('booking'));
     }
 
+    public function createBooking()
+    {
+        $rooms = Room::active()->orderBy('name')->get();
+        return view('admin.bookings-create', compact('rooms'));
+    }
+
+    public function storeBooking(Request $request)
+    {
+        $data = $request->validate([
+            'room_id'     => ['required', 'exists:rooms,id'],
+            'name'        => ['required', 'string', 'max:100'],
+            'email'       => ['required', 'email', 'max:100'],
+            'phone'       => ['nullable', 'string', 'max:20'],
+            'title'       => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'date'        => ['required', 'date', 'after_or_equal:today'],
+            'start_time'  => ['required', 'date_format:H:i'],
+            'end_time'    => ['required', 'date_format:H:i', 'after:start_time'],
+            'attendees'   => ['required', 'integer', 'min:1', 'max:500'],
+            'enable_zoom' => ['nullable', 'boolean'],
+        ], [
+            'room_id.required'    => 'Ruang harus dipilih.',
+            'room_id.exists'      => 'Ruang tidak valid.',
+            'name.required'       => 'Nama pemesan wajib diisi.',
+            'email.required'      => 'Email wajib diisi.',
+            'email.email'         => 'Format email tidak valid.',
+            'title.required'      => 'Topik meeting wajib diisi.',
+            'date.required'       => 'Tanggal wajib diisi.',
+            'date.after_or_equal' => 'Tanggal tidak boleh di masa lalu.',
+            'start_time.required' => 'Waktu mulai wajib diisi.',
+            'end_time.required'   => 'Waktu selesai wajib diisi.',
+            'end_time.after'      => 'Waktu selesai harus setelah waktu mulai.',
+            'attendees.required'  => 'Jumlah peserta wajib diisi.',
+        ]);
+
+        $startTime = $data['start_time'] . ':00';
+        $endTime   = $data['end_time'] . ':00';
+
+        if (!$this->availabilityService->isRoomAvailable($data['room_id'], $data['date'], $startTime, $endTime)) {
+            return back()->withInput()->withErrors(['date' => 'Ruang sudah dibooking pada waktu tersebut.']);
+        }
+
+        $data['start_time'] = $startTime;
+        $data['end_time']   = $endTime;
+
+        try {
+            $booking = $this->bookingService->createBookingByAdmin($data);
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['date' => 'Ruang sudah dibooking pada waktu tersebut.']);
+        }
+
+        return redirect()->route('admin.bookings.show', $booking->id)
+            ->with('success', 'Booking berhasil dibuat dan email konfirmasi telah dikirim.');
+    }
+
     public function cancelBooking(Request $request, int $id)
     {
         $request->validate([
@@ -92,8 +150,8 @@ class AdminController extends Controller
 
     public function reports(Request $request)
     {
-        $year  = $request->get('year', now()->year);
-        $month = $request->get('month', now()->month);
+        $year  = $request->input('year', now()->year);
+        $month = $request->input('month', now()->month);
 
         $monthlyStats = Booking::selectRaw('
                 DATE(date) as booking_date,

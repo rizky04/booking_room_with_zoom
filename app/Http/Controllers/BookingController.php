@@ -39,7 +39,11 @@ class BookingController extends Controller
             return back()->withInput()->withErrors(['end_time' => 'Durasi meeting minimum 30 menit dan maksimum 8 jam.']);
         }
 
-        $booking = $this->bookingService->createBooking($data);
+        try {
+            $booking = $this->bookingService->createBooking($data);
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['date' => 'Ruang meeting sudah dibooking pada waktu tersebut. Silakan pilih waktu lain.']);
+        }
 
         return redirect()->route('booking.pending', $booking->booking_code)
             ->with('success', 'Booking berhasil dibuat! Silakan cek email untuk konfirmasi.');

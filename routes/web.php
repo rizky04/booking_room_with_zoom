@@ -27,6 +27,8 @@ Route::middleware(\App\Http\Middleware\AdminAuth::class)->prefix('admin')->name(
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
+    Route::get('/bookings/create', [AdminController::class, 'createBooking'])->name('bookings.create');
+    Route::post('/bookings/create', [AdminController::class, 'storeBooking'])->name('bookings.store');
     Route::get('/bookings/{id}', [AdminController::class, 'showBooking'])->name('bookings.show');
     Route::get('/bookings/{id}/cancel', fn($id) => redirect()->route('admin.bookings.show', $id));
     Route::post('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking'])->name('bookings.cancel');
