@@ -16,11 +16,13 @@ Booking Anda telah **berhasil dikonfirmasi**. Sampai jumpa di meeting!
 
 @if($booking->zoomMeeting)
 <x-mail::panel>
-**Link Zoom Meeting**
+**Zoom Meeting**
 
-🔗 [Join Zoom Meeting]({{ $booking->zoomMeeting->join_url }})
+🔗 [Bergabung ke Rapat Zoom]({{ $booking->zoomMeeting->join_url }})
+
+📋 **ID Rapat:** {{ $booking->zoomMeeting->zoom_meeting_id }}
 @if($booking->zoomMeeting->password)
-🔒 **Password:** {{ $booking->zoomMeeting->password }}
+🔒 **Kode Sandi:** {{ $booking->zoomMeeting->password }}
 @endif
 </x-mail::panel>
 @endif

@@ -76,6 +76,9 @@ class BookingService
             $this->zoomService->createMeeting($booking);
         }
 
+        // Refresh agar relasi zoomMeeting termuat sebelum email dikirim
+        $booking->load(['room', 'zoomMeeting']);
+
         $this->emailService->sendBookingVerified($booking);
 
         return $booking;

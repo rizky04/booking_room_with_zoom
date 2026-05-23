@@ -39,7 +39,7 @@ class ZoomService
                 ->post("{$this->baseUrl}/users/me/meetings", [
                     'topic'      => $booking->title,
                     'type'       => 2,
-                    'start_time' => $booking->date->format('Y-m-d') . 'T' . $booking->start_time . ':00',
+                    'start_time' => $booking->date->format('Y-m-d') . 'T' . substr($booking->start_time, 0, 5) . ':00',
                     'duration'   => $duration,
                     'timezone'   => config('app.timezone', 'Asia/Jakarta'),
                     'agenda'     => $booking->description,
