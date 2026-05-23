@@ -16,6 +16,8 @@ Route::get('/verify/{token}', [BookingController::class, 'verify'])->name('booki
 Route::get('/cancel/{token}', [BookingController::class, 'cancelForm'])->name('booking.cancel.form');
 Route::post('/cancel/{token}', [BookingController::class, 'cancel'])->name('booking.cancel');
 Route::get('/api/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.check-availability');
+Route::get('/api/room-schedule', [BookingController::class, 'roomSchedule'])->name('api.room-schedule');
+Route::get('/api/room-monthly', [BookingController::class, 'roomMonthly'])->name('api.room-monthly');
 
 // Admin Authentication Routes
 Route::get('/admin/login', [AuthController::class, 'loginForm'])->name('admin.login');
@@ -25,6 +27,7 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.log
 // ADMIN Routes (with authentication)
 Route::middleware(\App\Http\Middleware\AdminAuth::class)->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/calendar-data', [AdminController::class, 'calendarData'])->name('calendar-data');
 
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
     Route::get('/bookings/create', [AdminController::class, 'createBooking'])->name('bookings.create');

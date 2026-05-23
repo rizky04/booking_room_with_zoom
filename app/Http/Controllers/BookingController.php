@@ -127,4 +127,52 @@ class BookingController extends Controller
             ]),
         ]);
     }
+
+    public function roomSchedule(Request $request)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'date'    => 'required|date',
+        ]);
+
+        $schedule = $this->availabilityService->getRoomSchedule($request->room_id, $request->date);
+
+        return response()->json([
+            'schedule' => $schedule->map(fn($b) => [
+                'id'         => $b->id,
+                'title'      => $b->title,
+                'start_time' => substr($b->start_time, 0, 5),
+                'end_time'   => substr($b->end_time, 0, 5),
+                'status'     => $b->status,
+                'name'       => $b->name,
+            ])->values(),
+        ]);
+    }
+
+    public function roomMonthly(Request $request)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'year'    => 'required|integer|min:2020|max:2030',
+            'month'   => 'required|integer|between:1,12',
+        ]);
+
+        $bookings = \App\Models\Booking::where('room_id', $request->room_id)
+            ->whereYear('date', $request->year)
+            ->whereMonth('date', $request->month)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->get(['date', 'start_time', 'end_time', 'title', 'status']);
+
+        $busyDays = [];
+        foreach ($bookings->groupBy(fn($b) => $b->date->format('Y-m-d')) as $date => $dayBookings) {
+            $busyDays[$date] = $dayBookings->map(fn($b) => [
+                'start_time' => substr($b->start_time, 0, 5),
+                'end_time'   => substr($b->end_time, 0, 5),
+                'title'      => $b->title,
+                'status'     => $b->status,
+            ])->values()->toArray();
+        }
+
+        return response()->json(['busy_days' => $busyDays]);
+    }
 }

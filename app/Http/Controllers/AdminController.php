@@ -42,6 +42,32 @@ class AdminController extends Controller
         ));
     }
 
+    public function calendarData(Request $request)
+    {
+        $date  = $request->input('date', now()->toDateString());
+        $rooms = \App\Models\Room::active()->orderBy('name')->get();
+
+        $bookings = \App\Models\Booking::with('room')
+            ->where('date', $date)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('start_time')
+            ->get();
+
+        return response()->json([
+            'date'     => $date,
+            'rooms'    => $rooms->map(fn($r) => ['id' => $r->id, 'name' => $r->name, 'location' => $r->location]),
+            'bookings' => $bookings->map(fn($b) => [
+                'id'         => $b->id,
+                'room_id'    => $b->room_id,
+                'title'      => $b->title,
+                'name'       => $b->name,
+                'start_time' => substr($b->start_time, 0, 5),
+                'end_time'   => substr($b->end_time, 0, 5),
+                'status'     => $b->status,
+            ]),
+        ]);
+    }
+
     public function bookings(Request $request)
     {
         $query = Booking::with('room')->orderByDesc('created_at');
