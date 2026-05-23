@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alur Program — Meeting Room Booking System</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 12px;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.5;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover .logo {
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 32px;
+    font-size: 40px;
+  }
+  .cover h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
+  .cover h2 { font-size: 18px; font-weight: 400; color: rgba(255,255,255,0.7); margin-bottom: 48px; }
+  .cover .divider { width: 60px; height: 3px; background: #e94560; border-radius: 2px; margin: 0 auto 48px; }
+  .cover .meta { display: flex; gap: 48px; justify-content: center; flex-wrap: wrap; }
+  .cover .meta-item { text-align: center; }
+  .cover .meta-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .cover .meta-item .value { font-size: 14px; font-weight: 600; }
+  .cover .stack { margin-top: 48px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .cover .badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; font-size: 11px; }
+
+  /* ── Page layout ── */
+  .page {
+    padding: 40px 48px;
+    page-break-after: always;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── Section header ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  .section-number {
+    width: 36px; height: 36px;
+    background: #0f3460;
+    color: white;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 18px; font-weight: 700; color: #0f3460; }
+  .section-subtitle { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* ── Flow diagram ── */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  .flow-row { display: flex; align-items: flex-start; gap: 16px; width: 100%; justify-content: center; }
+
+  .node {
+    border-radius: 10px;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 130px;
+    max-width: 180px;
+    line-height: 1.4;
+    position: relative;
+  }
+  .node-desc {
+    font-size: 10px;
+    font-weight: 400;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  /* Node colors */
+  .n-start   { background: #dbeafe; border: 2px solid #3b82f6; color: #1d4ed8; }
+  .n-action  { background: #f0fdf4; border: 2px solid #22c55e; color: #15803d; }
+  .n-check   { background: #fef9c3; border: 2px solid #eab308; color: #854d0e;
+               clip-path: polygon(15px 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 15px 100%, 0% 50%);
+               padding: 10px 28px; min-width: 150px; }
+  .n-error   { background: #fef2f2; border: 2px solid #ef4444; color: #b91c1c; }
+  .n-success { background: #f0fdf4; border: 2px solid #16a34a; color: #15803d; }
+  .n-zoom    { background: #eff6ff; border: 2px solid #2563eb; color: #1d4ed8; }
+  .n-email   { background: #fdf4ff; border: 2px solid #a855f7; color: #7e22ce; }
+  .n-end     { background: #0f3460; color: white; border: 2px solid #0f3460; border-radius: 20px; }
+  .n-admin   { background: #fff7ed; border: 2px solid #f97316; color: #c2410c; }
+  .n-db      { background: #f8fafc; border: 2px dashed #64748b; color: #475569; border-radius: 6px; }
+
+  /* Arrows */
+  .arrow { text-align: center; color: #94a3b8; font-size: 18px; line-height: 1; margin: 4px 0; }
+  .arrow-label { font-size: 10px; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 8px; display: inline-block; margin-bottom: 2px; }
+
+  .branch { display: flex; gap: 24px; justify-content: center; width: 100%; align-items: flex-start; margin: 8px 0; }
+  .branch-item { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 220px; }
+  .branch-label { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 4px; margin-bottom: 6px; }
+  .branch-yes { background: #dcfce7; color: #15803d; }
+  .branch-no  { background: #fee2e2; color: #b91c1c; }
+  .branch-ok  { background: #dbeafe; color: #1d4ed8; }
+
+  .branch-connector {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    margin: 4px 0;
+  }
+  .branch-connector::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: #cbd5e1;
+  }
+
+  /* ── Info boxes ── */
+  .info-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0f3460;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .info-box.blue  { border-left-color: #3b82f6; background: #eff6ff; }
+  .info-box.green { border-left-color: #22c55e; background: #f0fdf4; }
+  .info-box.red   { border-left-color: #ef4444; background: #fef2f2; }
+  .info-box.purple{ border-left-color: #a855f7; background: #fdf4ff; }
+  .info-box.orange{ border-left-color: #f97316; background: #fff7ed; }
+
+  .info-title { font-weight: 700; font-size: 12px; margin-bottom: 8px; color: #0f3460; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 16px 0; }
+  th { background: #0f3460; color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .badge-ok   { background: #dcfce7; color: #15803d; border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+  .badge-warn { background: #fef9c3; color: #854d0e; border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+
+  /* ── Two column layout ── */
+  .two-col { display: flex; gap: 24px; margin: 16px 0; }
+  .two-col > div { flex: 1; }
+
+  /* ── Zoom conflict diagram ── */
+  .timeline { margin: 16px 0; }
+  .timeline-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .timeline-label { font-size: 10px; font-weight: 600; width: 80px; flex-shrink: 0; color: #475569; }
+  .timeline-bar-wrap { flex: 1; height: 28px; background: #f1f5f9; border-radius: 6px; position: relative; overflow: hidden; }
+  .tbar {
+    position: absolute; top: 4px; height: 20px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: white; white-space: nowrap; padding: 0 6px;
+  }
+  .tbar-blue   { background: #3b82f6; }
+  .tbar-green  { background: #22c55e; }
+  .tbar-orange { background: #f97316; }
+  .tbar-purple { background: #a855f7; }
+  .tbar-red    { background: #ef4444; }
+
+  /* timeline scale marks */
+  .timeline-scale { display: flex; margin-left: 88px; margin-bottom: 4px; }
+  .timeline-scale span { flex: 1; font-size: 9px; color: #94a3b8; text-align: left; }
+
+  /* ── Print ── */
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .node, .info-box, th, .tbar, .badge-ok, .badge-warn, .branch-label, .section-number, .n-end {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    body { font-size: 11px; }
+  }
+
+  @page { margin: 0; size: A4; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ COVER ════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo">📅</div>
+  <h1>Meeting Room Booking System</h1>
+  <h2>Dokumentasi Alur Program</h2>
+  <div class="divider"></div>
+  <div class="meta">
+    <div class="meta-item">
+      <div class="label">Versi</div>
+      <div class="value">v3.0</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Tanggal</div>
+      <div class="value">Mei 2026</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Status</div>
+      <div class="value">Production Ready</div>
+    </div>
+  </div>
+  <div class="stack">
+    <span class="badge">Laravel 12</span>
+    <span class="badge">PHP 8.5</span>
+    <span class="badge">MySQL</span>
+    <span class="badge">Zoom API</span>
+    <span class="badge">Hostinger SMTP</span>
+    <span class="badge">Alpine.js</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 1: OVERVIEW ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">📋</div>
+    <div>
+      <div class="section-title">Gambaran Umum Sistem</div>
+      <div class="section-subtitle">Komponen utama dan hubungan antar modul</div>
+    </div>
+  </div>
+
+  <div class="info-box blue">
+    <div class="info-title">Tentang Sistem</div>
+    Sistem booking ruang meeting berbasis web yang memungkinkan karyawan melakukan reservasi ruang secara mandiri melalui form publik tanpa login. Admin dapat mengelola seluruh booking, ruang, dan membuat booking langsung. Sistem terintegrasi dengan Zoom API untuk pembuatan meeting otomatis dan email SMTP untuk notifikasi.
+  </div>
+
+  <div class="two-col" style="margin-top: 20px;">
+    <div>
+      <div class="info-box green">
+        <div class="info-title">👤 Alur User (Publik)</div>
+        <ol style="padding-left: 16px; line-height: 2;">
+          <li>Buka form booking</li>
+          <li>Isi data &amp; pilih ruang/waktu</li>
+          <li>Submit → status PENDING</li>
+          <li>Terima email verifikasi</li>
+          <li>Klik link → status CONFIRMED</li>
+          <li>Terima email konfirmasi + Zoom</li>
+        </ol>
+      </div>
+    </div>
+    <div>
+      <div class="info-box orange">
+        <div class="info-title">🔧 Alur Admin</div>
+        <ol style="padding-left: 16px; line-height: 2;">
+          <li>Login ke dashboard admin</li>
+          <li>Pantau semua booking</li>
+          <li>Buat booking langsung (confirmed)</li>
+          <li>Batalkan booking + kirim email</li>
+          <li>Kelola data ruang (CRUD)</li>
+          <li>Lihat laporan bulanan</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <table style="margin-top: 24px;">
+    <tr>
+      <th>Modul</th>
+      <th>File Utama</th>
+      <th>Fungsi</th>
+    </tr>
+    <tr>
+      <td><strong>BookingService</strong></td>
+      <td>app/Services/BookingService.php</td>
+      <td>Buat, verifikasi, batalkan booking. Semua operasi kritis dalam DB transaction + lock.</td>
+    </tr>
+    <tr>
+      <td><strong>AvailabilityService</strong></td>
+      <td>app/Services/AvailabilityService.php</td>
+      <td>Cek ketersediaan ruang, validasi jam operasional &amp; durasi</td>
+    </tr>
+    <tr>
+      <td><strong>ZoomService</strong></td>
+      <td>app/Services/ZoomService.php</td>
+      <td>Buat/hapus Zoom meeting, pilih akun otomatis (akun 1 atau 2)</td>
+    </tr>
+    <tr>
+      <td><strong>EmailService</strong></td>
+      <td>app/Services/EmailService.php</td>
+      <td>Kirim email konfirmasi, verifikasi, pembatalan, pengingat</td>
+    </tr>
+    <tr>
+      <td><strong>BookingController</strong></td>
+      <td>app/Http/Controllers/BookingController.php</td>
+      <td>Handle semua request publik (form, verifikasi, batalkan)</td>
+    </tr>
+    <tr>
+      <td><strong>AdminController</strong></td>
+      <td>app/Http/Controllers/AdminController.php</td>
+      <td>Handle semua request admin (dashboard, bookings, laporan)</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 2: PUBLIC BOOKING ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">1</div>
+    <div>
+      <div class="section-title">Alur Booking Publik (User)</div>
+      <div class="section-subtitle">Dari form submission hingga konfirmasi email</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 32px;">
+    <!-- Flow diagram -->
+    <div style="flex: 1;">
+      <div class="flow">
+
+        <div class="node n-start" style="width:200px;">
+          🌐 User buka website
+          <div class="node-desc">GET /</div>
+        </div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-action" style="width:200px;">
+          📝 Isi Form Booking
+          <div class="node-desc">Nama, email, ruang, tanggal,<br>waktu, topik, Zoom?</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="arrow-label">POST /bookings</div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-check" style="width:200px; clip-path:none; border-radius:8px; background:#fef9c3;">
+          ⚡ Validasi Form
+          <div class="node-desc">Format, field wajib,<br>tanggal &amp; waktu valid</div>
+        </div>
+
+        <div class="branch" style="margin-top: 12px;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌ Tidak Valid</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:130px;">
+              Kembali ke form + pesan error
+            </div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓ Valid</div>
+            <div class="arrow">↓</div>
+            <div class="node n-db" style="max-width:160px;">
+              🔒 DB Transaction<br>+ lockForUpdate()
+              <div class="node-desc">Mencegah double booking</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:150px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              Ruang tersedia?
+            </div>
+          </div>
+        </div>
+
+        <div class="branch" style="margin-top: 8px;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌ Bentrok</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">
+              Error: Ruang sudah dipesan
+            </div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓ Kosong</div>
+            <div class="arrow">↓</div>
+            <div class="node n-action" style="max-width:160px;">
+              Simpan Booking<br>status = <strong>PENDING</strong>
+              <div class="node-desc">Token verifikasi dibuat</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:160px;">
+              📧 Kirim Email<br>Verifikasi
+              <div class="node-desc">Link aktif 24 jam</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-end" style="max-width:150px;">
+              Halaman: Cek Email Anda
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right side info -->
+    <div style="width: 200px; flex-shrink: 0;">
+      <div class="info-box" style="margin-bottom: 12px;">
+        <div class="info-title">Route</div>
+        <code style="font-size:10px; display:block; margin-bottom:4px; color:#0f3460;">GET /</code>
+        <code style="font-size:10px; display:block; color:#0f3460;">POST /bookings</code>
+      </div>
+      <div class="info-box blue">
+        <div class="info-title">Status setelah submit</div>
+        <span style="background:#fef9c3; color:#854d0e; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700;">PENDING</span>
+        <p style="margin-top:6px; font-size:10px;">Booking tersimpan tapi belum dikonfirmasi. Ruang sudah diblokir sementara.</p>
+      </div>
+      <div class="info-box green" style="margin-top: 12px;">
+        <div class="info-title">Real-time Cek</div>
+        <p style="font-size:10px;">Saat user memilih ruang/tanggal/waktu, form langsung cek ketersediaan via AJAX ke <code>/api/check-availability</code></p>
+      </div>
+      <div class="info-box red" style="margin-top: 12px;">
+        <div class="info-title">Token kadaluarsa</div>
+        <p style="font-size:10px;">Link verifikasi hanya berlaku <strong>24 jam</strong>. Lewat dari itu, booking bisa dihapus oleh sistem.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 3: VERIFICATION ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">2</div>
+    <div>
+      <div class="section-title">Alur Verifikasi Email</div>
+      <div class="section-subtitle">User klik link di email → booking dikonfirmasi + Zoom dibuat</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 32px;">
+    <div style="flex: 1;">
+      <div class="flow">
+
+        <div class="node n-start" style="width:220px;">
+          📧 User klik link di email
+          <div class="node-desc">GET /verify/{token}</div>
+        </div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-check" style="clip-path:none; border-radius:8px; background:#fef9c3; width:220px;">
+          Token valid &amp; status PENDING?
+        </div>
+
+        <div class="branch" style="margin: 10px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌ Tidak Valid / Kadaluarsa</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">Halaman:<br>Verifikasi Gagal</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓ Valid</div>
+            <div class="arrow">↓</div>
+            <div class="node n-db" style="max-width:170px;">
+              🔒 DB Transaction<br>+ lockForUpdate()
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:160px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              Cek ulang ketersediaan<br>(excludeId = booking ini)
+            </div>
+          </div>
+        </div>
+
+        <div class="branch" style="margin: 8px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌ Ada yang confirm duluan</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">Halaman:<br>Verifikasi Gagal<br><span style="font-size:9px; font-weight:400;">(ruang diambil orang lain)</span></div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓ Masih kosong</div>
+            <div class="arrow">↓</div>
+            <div class="node n-success" style="max-width:160px;">
+              Status → <strong>CONFIRMED</strong>
+              <div class="node-desc">verified_at = now()<br>token = null</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:150px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              enable_zoom = true?
+            </div>
+          </div>
+        </div>
+
+        <div class="branch" style="margin: 8px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">Tidak</div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:140px;">📧 Email Konfirmasi<br>(tanpa Zoom)</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">Ya</div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:150px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              Akun Zoom 1 bentrok<br>di jam ini?
+            </div>
+          </div>
+        </div>
+
+        <div class="branch" style="margin: 8px 0;">
+          <div class="branch-item" style="max-width: 140px;"></div>
+          <div class="branch-item">
+            <div class="branch-label branch-no" style="background:#dbeafe; color:#1d4ed8;">Tidak bentrok</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              ☁️ Zoom Akun 1<br>
+              <div class="node-desc">Meeting dibuat</div>
+            </div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-no">Bentrok</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              ☁️ Zoom Akun 2<br>
+              <div class="node-desc">Fallback otomatis</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+        <div class="node n-email" style="width:220px;">
+          📧 Email Konfirmasi dikirim
+          <div class="node-desc">Detail + Link Zoom + ID Rapat + Kode Sandi</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-end" style="width:200px;">✅ Halaman: Booking Berhasil</div>
+      </div>
+    </div>
+
+    <div style="width: 200px; flex-shrink: 0;">
+      <div class="info-box purple">
+        <div class="info-title">📧 Isi Email Konfirmasi</div>
+        <ul style="padding-left: 14px; font-size: 10px; line-height: 2;">
+          <li>Nama &amp; kode booking</li>
+          <li>Nama ruang + lokasi</li>
+          <li>Tanggal &amp; waktu</li>
+          <li>Topik meeting</li>
+          <li>🔗 Link Zoom</li>
+          <li>📋 ID Rapat Zoom</li>
+          <li>🔒 Kode Sandi Zoom</li>
+          <li>Link batalkan booking</li>
+        </ul>
+      </div>
+      <div class="info-box blue" style="margin-top: 12px;">
+        <div class="info-title">🔒 Double Protection</div>
+        <p style="font-size:10px; line-height:1.7;">
+          Verifikasi dilakukan dalam <strong>DB Transaction + lockForUpdate()</strong> sehingga jika 2 orang klik verify bersamaan, hanya 1 yang berhasil.
+        </p>
+      </div>
+      <div class="info-box" style="margin-top: 12px; border-left-color: #2563eb;">
+        <div class="info-title">Zoom account_index</div>
+        <p style="font-size:10px; line-height:1.7;">Setiap Zoom meeting menyimpan <code>account_index</code> (1 atau 2) agar saat pembatalan, sistem tahu akun mana yang dipakai untuk hapus meeting.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 4: ADMIN BOOKING ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">3</div>
+    <div>
+      <div class="section-title">Alur Booking oleh Admin</div>
+      <div class="section-subtitle">Admin buat booking langsung tanpa perlu verifikasi email</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 32px;">
+    <div style="flex: 1;">
+      <div class="flow">
+
+        <div class="node n-admin" style="width:220px;">
+          🔧 Admin Login
+          <div class="node-desc">POST /admin/login</div>
+        </div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-admin" style="width:220px;">
+          Dashboard → Bookings<br>→ Klik "Buat Booking"
+          <div class="node-desc">GET /admin/bookings/create</div>
+        </div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-action" style="width:220px;">
+          📝 Isi Form Admin
+          <div class="node-desc">Nama, email pemesan, ruang,<br>tanggal, waktu, topik, Zoom?</div>
+        </div>
+        <div class="arrow" style="margin:6px 0;">
+          <div class="arrow-label" style="margin-bottom:4px;">Real-time cek ketersediaan (AJAX)</div>
+          ↓
+        </div>
+        <div class="arrow-label">POST /admin/bookings/create</div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-db" style="width:220px;">
+          🔒 DB Transaction + lockForUpdate()
+        </div>
+        <div class="arrow">↓</div>
+
+        <div class="node n-check" style="clip-path:none; border-radius:8px; background:#fef9c3; width:220px;">
+          Ruang tersedia?
+        </div>
+
+        <div class="branch" style="margin: 10px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌ Bentrok</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">Error: kembali ke form</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓ Kosong</div>
+            <div class="arrow">↓</div>
+            <div class="node n-success" style="max-width:180px;">
+              Simpan Booking<br>status = <strong>CONFIRMED</strong>
+              <div class="node-desc">Langsung confirmed,<br>tanpa verifikasi email</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:160px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              enable_zoom = true?
+            </div>
+          </div>
+        </div>
+
+        <div class="branch" style="margin: 8px 0;">
+          <div class="branch-item" style="max-width:100px;"></div>
+          <div class="branch-item">
+            <div class="branch-label branch-no">Tidak</div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:130px;">📧 Email Konfirmasi</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">Ya</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              ☁️ Buat Zoom<br>(Akun 1 atau 2)
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:130px;">📧 Email + Zoom</div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+        <div class="node n-end" style="width:220px;">Redirect → Detail Booking</div>
+
+      </div>
+    </div>
+
+    <div style="width: 200px; flex-shrink: 0;">
+      <div class="info-box orange">
+        <div class="info-title">Perbedaan Admin vs User</div>
+        <table style="font-size:10px; margin:0;">
+          <tr>
+            <td style="padding:4px 6px; border-bottom:1px solid #fed7aa;"><strong>User</strong></td>
+            <td style="padding:4px 6px; border-bottom:1px solid #fed7aa; color:#15803d;">Perlu verifikasi email</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>Admin</strong></td>
+            <td style="padding:4px 6px; color:#2563eb;">Langsung confirmed</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="info-box green" style="margin-top: 12px;">
+        <div class="info-title">Kapan dipakai?</div>
+        <ul style="padding-left: 14px; font-size: 10px; line-height: 2;">
+          <li>Atasan minta meeting dadakan</li>
+          <li>Booking atas nama orang lain</li>
+          <li>Meeting internal mendadak</li>
+          <li>Tidak sempat verifikasi email</li>
+        </ul>
+      </div>
+
+      <div class="info-box" style="margin-top: 12px; border-left-color: #a855f7;">
+        <div class="info-title">Email tetap dikirim</div>
+        <p style="font-size:10px; line-height:1.7;">Meskipun admin yang buat, email konfirmasi tetap dikirim ke alamat email pemesan yang diisi di form.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 5: CANCEL ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">4</div>
+    <div>
+      <div class="section-title">Alur Pembatalan Booking</div>
+      <div class="section-subtitle">Bisa dibatalkan oleh user (via link email) maupun admin (via dashboard)</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- User cancel -->
+    <div>
+      <div class="info-box" style="margin-bottom:16px; border-left-color:#ef4444; text-align:center; padding:10px;">
+        <div class="info-title" style="color:#b91c1c;">👤 Batalkan oleh User</div>
+      </div>
+      <div class="flow">
+        <div class="node n-start" style="width:200px;">
+          User klik link "Batalkan"<br>di email
+          <div class="node-desc">GET /cancel/{token}</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-check" style="clip-path:none; border-radius:8px; background:#fef9c3; width:200px;">
+          Token valid?<br>Status pending/confirmed?
+        </div>
+        <div class="branch" style="margin:10px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:120px;">Error: Link tidak valid</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓</div>
+            <div class="arrow">↓</div>
+            <div class="node n-action" style="max-width:140px;">
+              Form konfirmasi<br>+ isi alasan
+              <div class="node-desc">POST /cancel/{token}</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">
+              Status → <strong>CANCELLED</strong>
+              <div class="node-desc">cancelled_by = 'user'<br>cancel_token = null</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:130px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              Ada Zoom meeting?
+            </div>
+          </div>
+        </div>
+        <div class="branch" style="margin:8px 0;">
+          <div class="branch-item" style="max-width:80px;"></div>
+          <div class="branch-item">
+            <div class="branch-label branch-no">Tidak</div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:120px;">📧 Email Cancelled</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">Ya</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              ☁️ Hapus dari Zoom<br>
+              <div class="node-desc">pakai account_index<br>yang tersimpan</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:120px;">📧 Email Cancelled</div>
+          </div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-end" style="width:180px;">Slot Ruang Bebas Kembali</div>
+      </div>
+    </div>
+
+    <!-- Admin cancel -->
+    <div>
+      <div class="info-box" style="margin-bottom:16px; border-left-color:#f97316; text-align:center; padding:10px;">
+        <div class="info-title" style="color:#c2410c;">🔧 Batalkan oleh Admin</div>
+      </div>
+      <div class="flow">
+        <div class="node n-admin" style="width:200px;">
+          Admin buka detail booking
+          <div class="node-desc">GET /admin/bookings/{id}</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-admin" style="width:200px;">
+          Klik "Batalkan" + isi alasan
+          <div class="node-desc">POST /admin/bookings/{id}/cancel</div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-check" style="clip-path:none; border-radius:8px; background:#fef9c3; width:200px;">
+          Status masih aktif?<br>(pending/confirmed)
+        </div>
+        <div class="branch" style="margin:10px 0;">
+          <div class="branch-item">
+            <div class="branch-label branch-no">❌</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:120px;">404 Not Found</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">✓</div>
+            <div class="arrow">↓</div>
+            <div class="node n-error" style="max-width:140px;">
+              Status → <strong>CANCELLED</strong>
+              <div class="node-desc">cancelled_by = 'admin'<br>cancel_reason tersimpan</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-check" style="max-width:130px; clip-path:none; border-radius:8px; background:#fef9c3;">
+              Ada Zoom meeting?
+            </div>
+          </div>
+        </div>
+        <div class="branch" style="margin:8px 0;">
+          <div class="branch-item" style="max-width:80px;"></div>
+          <div class="branch-item">
+            <div class="branch-label branch-no">Tidak</div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:120px;">📧 Email Cancelled</div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-yes">Ya</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              ☁️ Hapus dari Zoom<br>
+              <div class="node-desc">pakai account_index<br>yang tersimpan</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-email" style="max-width:120px;">📧 Email Cancelled</div>
+          </div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="node n-end" style="width:180px;">Redirect → Detail Booking</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 6: ZOOM CONFLICT ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">5</div>
+    <div>
+      <div class="section-title">Logika Pemilihan Akun Zoom</div>
+      <div class="section-subtitle">Otomatis beralih ke akun 2 jika akun 1 sudah dipakai di slot waktu yang sama</div>
+    </div>
+  </div>
+
+  <div class="flow" style="margin-bottom: 24px;">
+    <div class="node n-zoom" style="width:260px;">
+      ☁️ createMeeting($booking) dipanggil
+    </div>
+    <div class="arrow">↓</div>
+    <div class="node n-check" style="clip-path:none; border-radius:8px; background:#fef9c3; width:280px;">
+      selectAccount(): Apakah Akun 1 sudah punya meeting<br>yang waktunya overlap dengan booking ini?
+      <div class="node-desc">Query: ZoomMeeting JOIN booking WHERE date = X AND start &lt; endX AND end &gt; startX AND account_index = 1</div>
+    </div>
+
+    <div class="branch" style="margin: 12px 0;">
+      <div class="branch-item">
+        <div class="branch-label" style="background:#dcfce7; color:#15803d;">✓ Tidak ada overlap → Akun 1 KOSONG</div>
+        <div class="arrow">↓</div>
+        <div class="node n-zoom" style="max-width:180px;">
+          Gunakan Akun 1
+          <div class="node-desc">ZOOM_CLIENT_ID<br>ZOOM_ACCOUNT_ID</div>
+        </div>
+      </div>
+      <div class="branch-item">
+        <div class="branch-label branch-no">❌ Ada overlap → Akun 1 BENTROK</div>
+        <div class="arrow">↓</div>
+        <div class="node n-check" style="max-width:180px; clip-path:none; border-radius:8px; background:#fef9c3;">
+          Akun 2 dikonfigurasi<br>di .env?
+        </div>
+        <div class="branch" style="margin-top:10px;">
+          <div class="branch-item">
+            <div class="branch-label branch-yes">Ya</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              Gunakan Akun 2
+              <div class="node-desc">ZOOM_2_CLIENT_ID<br>ZOOM_2_ACCOUNT_ID</div>
+            </div>
+          </div>
+          <div class="branch-item">
+            <div class="branch-label branch-no">Tidak</div>
+            <div class="arrow">↓</div>
+            <div class="node n-zoom" style="max-width:130px;">
+              Fallback Akun 1
+              <div class="node-desc">Tetap dibuat<br>di Akun 1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline visualization -->
+  <div class="info-box" style="border-left-color: #2563eb;">
+    <div class="info-title">Contoh Visual: Timeline Penggunaan Akun Zoom</div>
+    <div class="timeline" style="margin-top: 12px;">
+      <div class="timeline-scale">
+        <span>08:00</span><span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span><span>15:00</span>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">Booking #1<br>Room A</div>
+        <div class="timeline-bar-wrap">
+          <div class="tbar tbar-blue" style="left:12.5%; width:12.5%;">Akun 1</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">Booking #2<br>Room B</div>
+        <div class="timeline-bar-wrap">
+          <div class="tbar tbar-orange" style="left:25%; width:12.5%;">Akun 2</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">Booking #3<br>Room A</div>
+        <div class="timeline-bar-wrap">
+          <div class="tbar tbar-green" style="left:37.5%; width:12.5%;">Akun 1</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">Booking #4<br>Room C</div>
+        <div class="timeline-bar-wrap">
+          <div class="tbar tbar-blue" style="left:50%; width:25%;">Akun 1</div>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">Booking #5<br>Room B</div>
+        <div class="timeline-bar-wrap">
+          <div class="tbar tbar-purple" style="left:50%; width:12.5%;">Akun 2 ← bentrok dg #4</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:10px; color:#64748b; margin-top:10px;">Booking #2 pakai Akun 2 karena Akun 1 sedang dipakai Booking #1 di jam yang sama. Booking #3 kembali ke Akun 1 karena #1 sudah selesai.</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ PAGE 7: CONFLICT PROTECTION ════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-number">6</div>
+    <div>
+      <div class="section-title">Perlindungan dari Bentrokan</div>
+      <div class="section-subtitle">Semua skenario yang mungkin terjadi dan cara sistem mengatasinya</div>
+    </div>
+  </div>
+
+  <table>
+    <tr>
+      <th style="width:5%;">#</th>
+      <th style="width:28%;">Skenario</th>
+      <th style="width:37%;">Mekanisme Perlindungan</th>
+      <th style="width:15%;">Lapisan</th>
+      <th style="width:15%;">Status</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Double booking ruang</strong><br>2 orang booking ruang & waktu yang sama</td>
+      <td><code>DB::transaction()</code> + <code>lockForUpdate()</code> + <code>isRoomAvailable()</code></td>
+      <td>Database level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Race condition</strong><br>Submit bersamaan di milidetik yang sama</td>
+      <td>MySQL row lock memaksa antrian. Yang ke-2 menunggu, lalu cek ulang ketersediaan</td>
+      <td>Database level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Verifikasi terlambat</strong><br>Slot sudah diambil orang lain saat user verify</td>
+      <td><code>isRoomAvailable(excludeId)</code> dijalankan ulang di dalam transaction saat verify</td>
+      <td>Aplikasi level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Token kadaluarsa</strong><br>User verify setelah 24 jam</td>
+      <td>Cek <code>created_at + 24 jam</code> sebelum proses verifikasi</td>
+      <td>Aplikasi level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Zoom akun 1 bentrok</strong><br>2 booking di jam yang sama butuh Zoom</td>
+      <td><code>selectAccount()</code> deteksi overlap, otomatis pakai Akun 2</td>
+      <td>Aplikasi level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Hapus Zoom dengan akun salah</strong><br>Meeting dibuat akun 2, dihapus pakai akun 1</td>
+      <td><code>account_index</code> disimpan di <code>zoom_meetings</code>, selalu diteruskan ke <code>deleteMeeting()</code></td>
+      <td>Database level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Booking cancelled memblok slot</strong><br>Setelah cancel, slot tetap terblok</td>
+      <td>Semua query filter <code>status IN ('pending','confirmed')</code> — cancelled diabaikan</td>
+      <td>Aplikasi level</td>
+      <td><span class="badge-ok">✅ AMAN</span></td>
+    </tr>
+  </table>
+
+  <div style="margin-top: 28px;">
+    <div class="info-box blue">
+      <div class="info-title">Lapisan Keamanan Bertahap</div>
+      <div style="display: flex; gap: 0; margin-top: 10px; border-radius: 8px; overflow: hidden; font-size: 11px;">
+        <div style="flex:1; background:#dbeafe; padding:12px; text-align:center;">
+          <div style="font-weight:700; color:#1d4ed8; margin-bottom:4px;">Lapis 1</div>
+          <div style="font-size:10px; color:#1e40af;">Validasi Form<br>(StoreBookingRequest)</div>
+        </div>
+        <div style="width:2px; background:#bfdbfe;"></div>
+        <div style="flex:1; background:#dcfce7; padding:12px; text-align:center;">
+          <div style="font-weight:700; color:#15803d; margin-bottom:4px;">Lapis 2</div>
+          <div style="font-size:10px; color:#166534;">Cek Awal<br>isRoomAvailable()</div>
+        </div>
+        <div style="width:2px; background:#bbf7d0;"></div>
+        <div style="flex:1; background:#fef9c3; padding:12px; text-align:center;">
+          <div style="font-weight:700; color:#854d0e; margin-bottom:4px;">Lapis 3</div>
+          <div style="font-size:10px; color:#713f12;">DB Transaction<br>+ lockForUpdate()</div>
+        </div>
+        <div style="width:2px; background:#fde68a;"></div>
+        <div style="flex:1; background:#fee2e2; padding:12px; text-align:center;">
+          <div style="font-weight:700; color:#b91c1c; margin-bottom:4px;">Lapis 4</div>
+          <div style="font-size:10px; color:#991b1b;">Cek Ulang saat<br>Verify Email</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top: 16px;">
+    <div class="info-box green">
+      <div class="info-title">Status Booking</div>
+      <table style="margin:0; font-size:10px;">
+        <tr><th style="padding:5px 8px;">Status</th><th style="padding:5px 8px;">Arti</th><th style="padding:5px 8px;">Blok Slot?</th></tr>
+        <tr><td style="padding:5px 8px;"><strong>pending</strong></td><td style="padding:5px 8px;">Menunggu verifikasi</td><td style="padding:5px 8px; color:#15803d;">Ya</td></tr>
+        <tr><td style="padding:5px 8px;"><strong>confirmed</strong></td><td style="padding:5px 8px;">Terverifikasi</td><td style="padding:5px 8px; color:#15803d;">Ya</td></tr>
+        <tr><td style="padding:5px 8px;"><strong>cancelled</strong></td><td style="padding:5px 8px;">Dibatalkan</td><td style="padding:5px 8px; color:#b91c1c;">Tidak</td></tr>
+        <tr><td style="padding:5px 8px;"><strong>completed</strong></td><td style="padding:5px 8px;">Selesai</td><td style="padding:5px 8px; color:#b91c1c;">Tidak</td></tr>
+      </table>
+    </div>
+    <div class="info-box orange">
+      <div class="info-title">Email yang Dikirim Sistem</div>
+      <table style="margin:0; font-size:10px;">
+        <tr><th style="padding:5px 8px;">Trigger</th><th style="padding:5px 8px;">Email</th></tr>
+        <tr><td style="padding:5px 8px;">Submit booking</td><td style="padding:5px 8px;">Link Verifikasi</td></tr>
+        <tr><td style="padding:5px 8px;">Verifikasi berhasil</td><td style="padding:5px 8px;">Konfirmasi + Zoom</td></tr>
+        <tr><td style="padding:5px 8px;">Admin buat booking</td><td style="padding:5px 8px;">Konfirmasi + Zoom</td></tr>
+        <tr><td style="padding:5px 8px;">Booking dibatalkan</td><td style="padding:5px 8px;">Notifikasi Cancel</td></tr>
+        <tr><td style="padding:5px 8px;">H-24 &amp; H-1 jam</td><td style="padding:5px 8px;">Pengingat</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-trigger print dialog if needed
+  // window.onload = () => window.print();
+</script>
+</body>
+</html>
